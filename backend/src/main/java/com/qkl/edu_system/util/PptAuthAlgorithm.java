@@ -14,13 +14,9 @@ public class PptAuthAlgorithm {
             '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     };
 
-    public String getSignature(String appId, String secret, long timestamp) {
-        try {
-            String auth = md5(appId + timestamp);
-            return hmacSHA1Encrypt(auth, secret);
-        } catch (SignatureException e) {
-            return null;
-        }
+    public String getSignature(String appId, String secret, long timestamp) throws SignatureException {
+        String auth = md5(appId + timestamp);
+        return hmacSHA1Encrypt(auth, secret);
     }
 
     private String hmacSHA1Encrypt(String encryptText, String encryptKey) throws SignatureException {

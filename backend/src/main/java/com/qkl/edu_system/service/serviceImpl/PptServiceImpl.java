@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.ByteArrayResource;
 
 import java.io.IOException;
+import java.security.SignatureException;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -77,9 +78,9 @@ public class PptServiceImpl implements PptService {
         }
         if ((file != null || StringUtils.hasText(fileUrl)) && !StringUtils.hasText(fileName)) {
             fileName = normalize(file == null ? null : file.getOriginalFilename());
-        }
-        if ((file != null || StringUtils.hasText(fileUrl)) && !StringUtils.hasText(fileName)) {
-            return buildError(CODE_PARAM_ERROR, "fileName 不能为空");
+            if (!StringUtils.hasText(fileName)) {
+                return buildError(CODE_PARAM_ERROR, "fileName 不能为空");
+            }
         }
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -215,26 +216,26 @@ public class PptServiceImpl implements PptService {
     }
 
     private Map<String, Object> exchangeJson(String url, HttpMethod method, Object body) {
-        HttpHeaders headers = buildAuthHeaders(MediaType.APPLICATION_JSON);
-        if (headers == null) {
-            return buildError(CODE_AUTH_ERROR, "鉴权信息未配置");
+        AuthHeadersResult headersResult = buildAuthHeaders(MediaType.APPLICATION_JSON);
+        if (headersResult.headers == null) {
+            return buildError(headersResult.errorCode, headersResult.errorMessage);
         }
-        HttpEntity<Object> entity = new HttpEntity<>(body, headers);
+        HttpEntity<Object> entity = new HttpEntity<>(body, headersResult.headers);
         return exchange(url, method, entity);
     }
 
     private Map<String, Object> exchangeMultipart(String url, MultiValueMap<String, Object> body) {
-        HttpHeaders headers = buildAuthHeaders(MediaType.MULTIPART_FORM_DATA);
-        if (headers == null) {
-            return buildError(CODE_AUTH_ERROR, "鉴权信息未配置");
+        AuthHeadersResult headersResult = buildAuthHeaders(MediaType.MULTIPART_FORM_DATA);
+        if (headersResult.headers == null) {
+            return buildError(headersResult.errorCode, headersResult.errorMessage);
         }
-        HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body, headers);
+        HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body, headersResult.headers);
         return exchange(url, HttpMethod.POST, entity);
     }
 
     private Map<String, Object> exchange(String url, HttpMethod method, HttpEntity<?> entity) {
         if (!StringUtils.hasText(url)) {
-            return buildError(CODE_AUTH_ERROR, "PPT 接口地址未配置");
+            return buildError(CODE_SYSTEM_ERROR, "PPT 接口地址未配置");
         }
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, method, entity, String.class);
@@ -257,21 +258,26 @@ public class PptServiceImpl implements PptService {
         }
     }
 
-    private HttpHeaders buildAuthHeaders(MediaType contentType) {
+    private AuthHeadersResult buildAuthHeaders(MediaType contentType) {
         if (!StringUtils.hasText(pptConfig.getAppId()) || !StringUtils.hasText(pptConfig.getSecret())) {
-            return null;
+            return new AuthHeadersResult(null, CODE_SYSTEM_ERROR, "鉴权信息未配置");
         }
         long timestamp = Instant.now().getEpochSecond();
-        String signature = authAlgorithm.getSignature(pptConfig.getAppId(), pptConfig.getSecret(), timestamp);
+        String signature;
+        try {
+            signature = authAlgorithm.getSignature(pptConfig.getAppId(), pptConfig.getSecret(), timestamp);
+        } catch (SignatureException e) {
+            return new AuthHeadersResult(null, CODE_AUTH_ERROR, "鉴权失败");
+        }
         if (!StringUtils.hasText(signature)) {
-            return null;
+            return new AuthHeadersResult(null, CODE_AUTH_ERROR, "鉴权失败");
         }
         HttpHeaders headers = new HttpHeaders();
         headers.set("appId", pptConfig.getAppId());
         headers.set("timestamp", String.valueOf(timestamp));
         headers.set("signature", signature);
         headers.setContentType(contentType);
-        return headers;
+        return new AuthHeadersResult(headers, null, null);
     }
 
     private String buildUrl(String path) {
@@ -354,6 +360,18 @@ public class PptServiceImpl implements PptService {
         @Override
         public String getFilename() {
             return filename;
+        }
+    }
+
+    private static class AuthHeadersResult {
+        private final HttpHeaders headers;
+        private final Integer errorCode;
+        private final String errorMessage;
+
+        private AuthHeadersResult(HttpHeaders headers, Integer errorCode, String errorMessage) {
+            this.headers = headers;
+            this.errorCode = errorCode;
+            this.errorMessage = errorMessage;
         }
     }
 }
