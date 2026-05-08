@@ -204,6 +204,7 @@ import { ElMessage } from 'element-plus'
 import { Search, Picture, MagicStick, Key, Notebook, Connection, PictureFilled } from '@element-plus/icons-vue'
 
 const apiBaseUrl = 'https://zwapi.xfyun.cn/api/ppt/v2'
+const AUTH_ERROR = 'missing-auth'
 
 const appId = ref('')
 const secret = ref('')
@@ -231,7 +232,7 @@ const pptResult = ref('')
 function ensureAuth() {
   if (!appId.value.trim() || !secret.value.trim()) {
     ElMessage.warning('请先填写 AppId 和 Secret')
-    throw new Error('missing-auth')
+    throw new Error(AUTH_ERROR)
   }
 }
 
@@ -441,10 +442,10 @@ function getCoverImage(tpl) {
 async function queryTemplates() {
   loading.value = true
   errorMsg.value = ''
-  templates.value = []
 
   try {
     const authHeaders = await buildAuthHeaders()
+    templates.value = []
     const payload = {
       pageNum: 1,
       pageSize: 12
@@ -478,7 +479,7 @@ async function queryTemplates() {
       ElMessage.success(`找到 ${templates.value.length} 个主题`)
     }
   } catch (err) {
-    if (err?.message === 'missing-auth') {
+    if (err?.message === AUTH_ERROR) {
       errorMsg.value = '请先填写 AppId 和 Secret'
       return
     }
@@ -531,7 +532,7 @@ async function checkPptProgress(sid) {
       pptResult.value = `<el-alert title="PPT生成失败：${data.data.errMsg || '未知错误'}" type="error" show-icon />`
     }
   } catch (e) {
-    if (e?.message === 'missing-auth') {
+    if (e?.message === AUTH_ERROR) {
       pptResult.value = '<el-alert title="请先填写 AppId 和 Secret" type="error" show-icon />'
       return
     }
@@ -595,7 +596,7 @@ async function createPPT() {
       pptResult.value = `<el-alert title="生成失败：${result?.desc || '未知错误'}" type="error" show-icon />`
     }
   } catch (err) {
-    if (err?.message === 'missing-auth') {
+    if (err?.message === AUTH_ERROR) {
       pptResult.value = '<el-alert title="请先填写 AppId 和 Secret" type="error" show-icon />'
       return
     }
