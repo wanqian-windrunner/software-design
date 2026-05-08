@@ -205,8 +205,8 @@ import { Search, Picture, MagicStick, Key, Notebook, Connection, PictureFilled }
 
 const apiBaseUrl = 'https://zwapi.xfyun.cn/api/ppt/v2'
 
-const appId = ref(localStorage.getItem('pptAppId') || '')
-const secret = ref(localStorage.getItem('pptSecret') || '')
+const appId = ref(sessionStorage.getItem('pptAppId') || '')
+const secret = ref(sessionStorage.getItem('pptSecret') || '')
 
 const filters = reactive({
   style: '',
@@ -228,11 +228,11 @@ const aiImage = ref('normal')
 const pptResult = ref('')
 
 watch(appId, (value) => {
-  localStorage.setItem('pptAppId', value.trim())
+  sessionStorage.setItem('pptAppId', value.trim())
 })
 
 watch(secret, (value) => {
-  localStorage.setItem('pptSecret', value)
+  sessionStorage.setItem('pptSecret', value)
 })
 
 function ensureAuth() {
