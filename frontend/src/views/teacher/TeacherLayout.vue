@@ -22,7 +22,7 @@ const menuItems = [
   { index: '/teacher/profile', title: '个人信息', icon: User },
   { index: '/teacher/students', title: '学生管理', icon: UserFilled },
   { index: '/teacher/exams', title: '考试管理', icon: Document },
-  { index: '/teacher/courseware', title: '生成课件', icon: MagicStick }
+  { index: '/teacher/courseware', title: 'PPT生成', icon: MagicStick }
 ]
 
 const handleLogout = () => {
