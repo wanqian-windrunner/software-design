@@ -199,14 +199,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Picture, MagicStick, Key, Notebook, Connection, PictureFilled } from '@element-plus/icons-vue'
 
 const apiBaseUrl = 'https://zwapi.xfyun.cn/api/ppt/v2'
 
-const appId = ref(sessionStorage.getItem('pptAppId') || '')
-const secret = ref(sessionStorage.getItem('pptSecret') || '')
+const appId = ref('')
+const secret = ref('')
 const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}')
 
 const filters = reactive({
@@ -227,14 +227,6 @@ const search = ref(false)
 const isFigure = ref(false)
 const aiImage = ref('normal')
 const pptResult = ref('')
-
-watch(appId, (value) => {
-  sessionStorage.setItem('pptAppId', value.trim())
-})
-
-watch(secret, (value) => {
-  sessionStorage.setItem('pptSecret', value.trim())
-})
 
 function ensureAuth() {
   if (!appId.value.trim() || !secret.value.trim()) {
@@ -563,8 +555,9 @@ async function createPPT() {
 
   const formData = new FormData()
   formData.append('query', queryText.value.trim())
-  if (templateId.value.trim()) {
-    formData.append('templateId', templateId.value.trim())
+  const trimmedTemplateId = templateId.value.trim()
+  if (trimmedTemplateId) {
+    formData.append('templateId', trimmedTemplateId)
   }
   formData.append('author', userInfo?.username || '智文')
   formData.append('isCardNote', isCardNote.value)
