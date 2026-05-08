@@ -205,6 +205,7 @@ import { Search, Picture, MagicStick, Key, Notebook, Connection, PictureFilled }
 
 const apiBaseUrl = 'https://zwapi.xfyun.cn/api/ppt/v2'
 const AUTH_ERROR = 'missing-auth'
+const DEFAULT_AUTHOR = '智文'
 
 const appId = ref('')
 const secret = ref('')
@@ -452,7 +453,6 @@ async function queryTemplates() {
 
   try {
     const authHeaders = await buildAuthHeaders()
-    templates.value = []
     const payload = {
       pageNum: 1,
       pageSize: 12
@@ -567,7 +567,7 @@ async function createPPT() {
   if (trimmedTemplateId) {
     formData.append('templateId', trimmedTemplateId)
   }
-  formData.append('author', authorName || '智文')
+  formData.append('author', authorName || DEFAULT_AUTHOR)
   formData.append('isCardNote', isCardNote.value)
   formData.append('search', search.value)
   formData.append('language', 'cn')
