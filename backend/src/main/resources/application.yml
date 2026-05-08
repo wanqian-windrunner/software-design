@@ -1,0 +1,20 @@
+spring:
+    application:
+        name: edu_system
+
+    datasource:
+        url: jdbc:mysql://localhost:3306/edu_system?useSSL=false&serverTimezone=UTC
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        username: root
+        password: yoyo0811
+
+mybatis:
+    configuration:
+        log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+        map-underscore-to-camel-case: true
+
+
+ai:
+    api-key: fc79c184-0e8f-4268-86e6-4bb74752e339
+    model: doubao-seed-2-0-lite-260215
+    base-url: https://ark.cn-beijing.volces.com/api/v3
