@@ -1,29 +1,5 @@
 <template>
   <div class="courseware-container">
-    <!-- 接口鉴权配置 -->
-    <el-card class="section-card" shadow="hover">
-      <template #header>
-        <div class="card-header">
-          <el-icon :size="24" color="#e6a23c"><Key /></el-icon>
-          <h2>接口鉴权</h2>
-        </div>
-      </template>
-
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <div class="filter-item">
-            <label class="filter-label">🔐 AppId</label>
-            <el-input v-model="appId" placeholder="请输入应用ID" clearable />
-          </div>
-        </el-col>
-        <el-col :span="12">
-          <div class="filter-item">
-            <label class="filter-label">🗝️ Secret</label>
-            <el-input v-model="secret" placeholder="请输入应用密钥" show-password clearable />
-          </div>
-        </el-col>
-      </el-row>
-    </el-card>
 
     <!-- PPT主题查询区域 -->
     <el-card class="section-card" shadow="hover">
@@ -203,12 +179,9 @@ import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Picture, MagicStick, Key, Notebook, Connection, PictureFilled } from '@element-plus/icons-vue'
 
-const apiBaseUrl = 'https://zwapi.xfyun.cn/api/ppt/v2'
-const AUTH_ERROR = 'missing-auth'
+const apiBaseUrl = '/api/ppt'
 const DEFAULT_AUTHOR = '智文'
 
-const appId = ref('')
-const secret = ref('')
 const userInfo = (() => {
   try {
     return JSON.parse(sessionStorage.getItem('userInfo') || '{}')
@@ -237,207 +210,6 @@ const isFigure = ref(false)
 const aiImage = ref('normal')
 const pptResult = ref('')
 
-function ensureAuth() {
-  if (!appId.value.trim() || !secret.value.trim()) {
-    ElMessage.warning('请先填写 AppId 和 Secret')
-    throw new Error(AUTH_ERROR)
-  }
-}
-
-async function buildAuthHeaders() {
-  ensureAuth()
-  const timestamp = Math.floor(Date.now() / 1000).toString()
-  const signature = await getSignature(appId.value.trim(), secret.value.trim(), timestamp)
-  return {
-    appId: appId.value.trim(),
-    timestamp,
-    signature
-  }
-}
-
-async function getSignature(appIdValue, secretValue, timestamp) {
-  const auth = md5(`${appIdValue}${timestamp}`)
-  return hmacSha1Base64(auth, secretValue)
-}
-
-async function hmacSha1Base64(message, key) {
-  const encoder = new TextEncoder()
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(key),
-    { name: 'HMAC', hash: 'SHA-1' },
-    false,
-    ['sign']
-  )
-  const signature = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(message))
-  return toBase64(signature)
-}
-
-function toBase64(buffer) {
-  const bytes = new Uint8Array(buffer)
-  let binary = ''
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte)
-  })
-  return btoa(binary)
-}
-
-function md5(str) {
-  return hex(md51(str))
-}
-
-function md51(str) {
-  const n = str.length
-  const state = [1732584193, -271733879, -1732584194, 271733878]
-  let i
-
-  for (i = 64; i <= n; i += 64) {
-    md5cycle(state, md5blk(str.substring(i - 64, i)))
-  }
-  str = str.substring(i - 64)
-  const tail = Array(16).fill(0)
-  for (i = 0; i < str.length; i += 1) {
-    tail[i >> 2] |= str.charCodeAt(i) << ((i % 4) << 3)
-  }
-  tail[i >> 2] |= 0x80 << ((i % 4) << 3)
-  if (i > 55) {
-    md5cycle(state, tail)
-    for (i = 0; i < 16; i += 1) {
-      tail[i] = 0
-    }
-  }
-  tail[14] = n * 8
-  md5cycle(state, tail)
-  return state
-}
-
-function md5blk(str) {
-  const blocks = []
-  for (let i = 0; i < 64; i += 4) {
-    blocks[i >> 2] =
-      str.charCodeAt(i) +
-      (str.charCodeAt(i + 1) << 8) +
-      (str.charCodeAt(i + 2) << 16) +
-      (str.charCodeAt(i + 3) << 24)
-  }
-  return blocks
-}
-
-function md5cycle(x, k) {
-  let [a, b, c, d] = x
-
-  a = ff(a, b, c, d, k[0], 7, -680876936)
-  d = ff(d, a, b, c, k[1], 12, -389564586)
-  c = ff(c, d, a, b, k[2], 17, 606105819)
-  b = ff(b, c, d, a, k[3], 22, -1044525330)
-  a = ff(a, b, c, d, k[4], 7, -176418897)
-  d = ff(d, a, b, c, k[5], 12, 1200080426)
-  c = ff(c, d, a, b, k[6], 17, -1473231341)
-  b = ff(b, c, d, a, k[7], 22, -45705983)
-  a = ff(a, b, c, d, k[8], 7, 1770035416)
-  d = ff(d, a, b, c, k[9], 12, -1958414417)
-  c = ff(c, d, a, b, k[10], 17, -42063)
-  b = ff(b, c, d, a, k[11], 22, -1990404162)
-  a = ff(a, b, c, d, k[12], 7, 1804603682)
-  d = ff(d, a, b, c, k[13], 12, -40341101)
-  c = ff(c, d, a, b, k[14], 17, -1502002290)
-  b = ff(b, c, d, a, k[15], 22, 1236535329)
-
-  a = gg(a, b, c, d, k[1], 5, -165796510)
-  d = gg(d, a, b, c, k[6], 9, -1069501632)
-  c = gg(c, d, a, b, k[11], 14, 643717713)
-  b = gg(b, c, d, a, k[0], 20, -373897302)
-  a = gg(a, b, c, d, k[5], 5, -701558691)
-  d = gg(d, a, b, c, k[10], 9, 38016083)
-  c = gg(c, d, a, b, k[15], 14, -660478335)
-  b = gg(b, c, d, a, k[4], 20, -405537848)
-  a = gg(a, b, c, d, k[9], 5, 568446438)
-  d = gg(d, a, b, c, k[14], 9, -1019803690)
-  c = gg(c, d, a, b, k[3], 14, -187363961)
-  b = gg(b, c, d, a, k[8], 20, 1163531501)
-  a = gg(a, b, c, d, k[13], 5, -1444681467)
-  d = gg(d, a, b, c, k[2], 9, -51403784)
-  c = gg(c, d, a, b, k[7], 14, 1735328473)
-  b = gg(b, c, d, a, k[12], 20, -1926607734)
-
-  a = hh(a, b, c, d, k[5], 4, -378558)
-  d = hh(d, a, b, c, k[8], 11, -2022574463)
-  c = hh(c, d, a, b, k[11], 16, 1839030562)
-  b = hh(b, c, d, a, k[14], 23, -35309556)
-  a = hh(a, b, c, d, k[1], 4, -1530992060)
-  d = hh(d, a, b, c, k[4], 11, 1272893353)
-  c = hh(c, d, a, b, k[7], 16, -155497632)
-  b = hh(b, c, d, a, k[10], 23, -1094730640)
-  a = hh(a, b, c, d, k[13], 4, 681279174)
-  d = hh(d, a, b, c, k[0], 11, -358537222)
-  c = hh(c, d, a, b, k[3], 16, -722521979)
-  b = hh(b, c, d, a, k[6], 23, 76029189)
-  a = hh(a, b, c, d, k[9], 4, -640364487)
-  d = hh(d, a, b, c, k[12], 11, -421815835)
-  c = hh(c, d, a, b, k[15], 16, 530742520)
-  b = hh(b, c, d, a, k[2], 23, -995338651)
-
-  a = ii(a, b, c, d, k[0], 6, -198630844)
-  d = ii(d, a, b, c, k[7], 10, 1126891415)
-  c = ii(c, d, a, b, k[14], 15, -1416354905)
-  b = ii(b, c, d, a, k[5], 21, -57434055)
-  a = ii(a, b, c, d, k[12], 6, 1700485571)
-  d = ii(d, a, b, c, k[3], 10, -1894986606)
-  c = ii(c, d, a, b, k[10], 15, -1051523)
-  b = ii(b, c, d, a, k[1], 21, -2054922799)
-  a = ii(a, b, c, d, k[8], 6, 1873313359)
-  d = ii(d, a, b, c, k[15], 10, -30611744)
-  c = ii(c, d, a, b, k[6], 15, -1560198380)
-  b = ii(b, c, d, a, k[13], 21, 1309151649)
-  a = ii(a, b, c, d, k[4], 6, -145523070)
-  d = ii(d, a, b, c, k[11], 10, -1120210379)
-  c = ii(c, d, a, b, k[2], 15, 718787259)
-  b = ii(b, c, d, a, k[9], 21, -343485551)
-
-  x[0] = add32(a, x[0])
-  x[1] = add32(b, x[1])
-  x[2] = add32(c, x[2])
-  x[3] = add32(d, x[3])
-}
-
-function cmn(q, a, b, x, s, t) {
-  return add32(((a + q + x + t) << s) | ((a + q + x + t) >>> (32 - s)), b)
-}
-
-function ff(a, b, c, d, x, s, t) {
-  return cmn((b & c) | (~b & d), a, b, x, s, t)
-}
-
-function gg(a, b, c, d, x, s, t) {
-  return cmn((b & d) | (c & ~d), a, b, x, s, t)
-}
-
-function hh(a, b, c, d, x, s, t) {
-  return cmn(b ^ c ^ d, a, b, x, s, t)
-}
-
-function ii(a, b, c, d, x, s, t) {
-  return cmn(c ^ (b | ~d), a, b, x, s, t)
-}
-
-const hexChars = '0123456789abcdef'
-
-function rhex(n) {
-  let s = ''
-  for (let j = 0; j < 4; j += 1) {
-    s += hexChars[(n >> (j * 8 + 4)) & 0x0f] + hexChars[(n >> (j * 8)) & 0x0f]
-  }
-  return s
-}
-
-function hex(x) {
-  return x.map(rhex).join('')
-}
-
-function add32(a, b) {
-  return (a + b) & 0xffffffff
-}
-
 function getCoverImage(tpl) {
   try {
     const imgObj = JSON.parse(tpl.detailImage || '{}')
@@ -452,7 +224,6 @@ async function queryTemplates() {
   errorMsg.value = ''
 
   try {
-    const authHeaders = await buildAuthHeaders()
     const payload = {
       pageNum: 1,
       pageSize: 12
@@ -467,9 +238,9 @@ async function queryTemplates() {
       payload.industry = filters.industry
     }
 
-    const res = await fetch(`${apiBaseUrl}/template/list`, {
+    const res = await fetch(`${apiBaseUrl}/templates`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
 
@@ -486,10 +257,6 @@ async function queryTemplates() {
       ElMessage.success(`找到 ${templates.value.length} 个主题`)
     }
   } catch (err) {
-    if (err?.message === AUTH_ERROR) {
-      errorMsg.value = '请先填写 AppId 和 Secret'
-      return
-    }
     if (!errorMsg.value) {
       errorMsg.value = '查询失败，请稍后重试'
     }
@@ -500,10 +267,7 @@ async function queryTemplates() {
 
 async function checkPptProgress(sid) {
   try {
-    const authHeaders = await buildAuthHeaders()
-    const res = await fetch(`${apiBaseUrl}/progress?sid=${sid}`, {
-      headers: authHeaders
-    })
+    const res = await fetch(`${apiBaseUrl}/progress?sid=${sid}`)
     const text = await res.text()
 
     if (text.startsWith('<!DOCTYPE') || text.startsWith('<html')) {
@@ -539,10 +303,6 @@ async function checkPptProgress(sid) {
       pptResult.value = `<el-alert title="PPT生成失败：${data.data.errMsg || '未知错误'}" type="error" show-icon />`
     }
   } catch (e) {
-    if (e?.message === AUTH_ERROR) {
-      pptResult.value = '<el-alert title="请先填写 AppId 和 Secret" type="error" show-icon />'
-      return
-    }
     pptResult.value = '<el-alert title="查询进度接口请求失败" type="error" show-icon />'
   }
 }
@@ -577,10 +337,8 @@ async function createPPT() {
   }
 
   try {
-    const authHeaders = await buildAuthHeaders()
     const res = await fetch(`${apiBaseUrl}/create`, {
       method: 'POST',
-      headers: authHeaders,
       body: formData
     })
 
@@ -603,10 +361,6 @@ async function createPPT() {
       pptResult.value = `<el-alert title="生成失败：${result?.desc || '未知错误'}" type="error" show-icon />`
     }
   } catch (err) {
-    if (err?.message === AUTH_ERROR) {
-      pptResult.value = '<el-alert title="请先填写 AppId 和 Secret" type="error" show-icon />'
-      return
-    }
     pptResult.value = '<el-alert title="请求出错，请稍后重试" type="error" show-icon />'
   } finally {
     generating.value = false
