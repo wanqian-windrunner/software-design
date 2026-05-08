@@ -33,12 +33,16 @@ public class PptServiceImpl implements PptService {
     private final PptConfig pptConfig;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
-    private final PptAuthAlgorithm authAlgorithm = new PptAuthAlgorithm();
+    private final PptAuthAlgorithm authAlgorithm;
 
-    public PptServiceImpl(PptConfig pptConfig, ObjectMapper objectMapper) {
+    public PptServiceImpl(PptConfig pptConfig,
+                          ObjectMapper objectMapper,
+                          RestTemplate restTemplate,
+                          PptAuthAlgorithm authAlgorithm) {
         this.pptConfig = pptConfig;
         this.objectMapper = objectMapper;
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = restTemplate;
+        this.authAlgorithm = authAlgorithm;
     }
 
     @Override

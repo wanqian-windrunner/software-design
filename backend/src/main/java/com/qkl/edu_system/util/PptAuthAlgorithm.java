@@ -1,5 +1,7 @@
 package com.qkl.edu_system.util;
 
+import org.springframework.stereotype.Component;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -7,6 +9,7 @@ import java.security.MessageDigest;
 import java.security.SignatureException;
 import java.util.Base64;
 
+@Component
 public class PptAuthAlgorithm {
 
     private static final char[] MD5_TABLE = {
