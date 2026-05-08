@@ -207,6 +207,7 @@ const apiBaseUrl = 'https://zwapi.xfyun.cn/api/ppt/v2'
 
 const appId = ref(sessionStorage.getItem('pptAppId') || '')
 const secret = ref(sessionStorage.getItem('pptSecret') || '')
+const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}')
 
 const filters = reactive({
   style: '',
@@ -232,11 +233,11 @@ watch(appId, (value) => {
 })
 
 watch(secret, (value) => {
-  sessionStorage.setItem('pptSecret', value)
+  sessionStorage.setItem('pptSecret', value.trim())
 })
 
 function ensureAuth() {
-  if (!appId.value.trim() || !secret.value) {
+  if (!appId.value.trim() || !secret.value.trim()) {
     ElMessage.warning('请先填写 AppId 和 Secret')
     throw new Error('missing-auth')
   }
@@ -245,7 +246,7 @@ function ensureAuth() {
 async function buildAuthHeaders() {
   ensureAuth()
   const timestamp = Math.floor(Date.now() / 1000).toString()
-  const signature = await getSignature(appId.value.trim(), secret.value, timestamp)
+  const signature = await getSignature(appId.value.trim(), secret.value.trim(), timestamp)
   return {
     appId: appId.value.trim(),
     timestamp,
@@ -565,7 +566,7 @@ async function createPPT() {
   if (templateId.value.trim()) {
     formData.append('templateId', templateId.value.trim())
   }
-  formData.append('author', '智文')
+  formData.append('author', userInfo?.username || '智文')
   formData.append('isCardNote', isCardNote.value)
   formData.append('search', search.value)
   formData.append('language', 'cn')
