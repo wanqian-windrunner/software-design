@@ -18,3 +18,8 @@ ai:
     api-key: fc79c184-0e8f-4268-86e6-4bb74752e339
     model: doubao-seed-2-0-lite-260215
     base-url: https://ark.cn-beijing.volces.com/api/v3
+
+ppt:
+    app-id: ${PPT_APP_ID:}
+    secret: ${PPT_SECRET:}
+    base-url: https://zwapi.xfyun.cn
