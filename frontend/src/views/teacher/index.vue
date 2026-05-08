@@ -19,7 +19,7 @@
         <el-col :span="12">
           <div class="filter-item">
             <label class="filter-label">🗝️ Secret</label>
-            <el-input v-model="secret" placeholder="请输入应用秘钥" show-password clearable />
+            <el-input v-model="secret" placeholder="请输入应用密钥" show-password clearable />
           </div>
         </el-col>
       </el-row>
@@ -208,7 +208,14 @@ const AUTH_ERROR = 'missing-auth'
 
 const appId = ref('')
 const secret = ref('')
-const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}')
+const userInfo = (() => {
+  try {
+    return JSON.parse(sessionStorage.getItem('userInfo') || '{}')
+  } catch {
+    return {}
+  }
+})()
+const authorName = typeof userInfo?.username === 'string' ? userInfo.username.trim() : ''
 
 const filters = reactive({
   style: '',
@@ -560,7 +567,7 @@ async function createPPT() {
   if (trimmedTemplateId) {
     formData.append('templateId', trimmedTemplateId)
   }
-  formData.append('author', userInfo?.username || '智文')
+  formData.append('author', authorName || '智文')
   formData.append('isCardNote', isCardNote.value)
   formData.append('search', search.value)
   formData.append('language', 'cn')
