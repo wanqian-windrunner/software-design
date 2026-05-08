@@ -6,7 +6,7 @@ spring:
         url: jdbc:mysql://localhost:3306/edu_system?useSSL=false&serverTimezone=UTC
         driver-class-name: com.mysql.cj.jdbc.Driver
         username: root
-        password: yoyo0811
+        password: toor
 
 mybatis:
     configuration:
